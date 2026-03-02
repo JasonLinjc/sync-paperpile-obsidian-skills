@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
+import argparse
 import bibtexparser
 import json
 import os
 import re
 from pathlib import Path
 from slugify import slugify
-import pprint
 
 """
 Sync Paperpile BibTeX export to Obsidian markdown files.
@@ -14,14 +14,11 @@ Creates a new markdown file for each paper in the Papers folder of your Obsidian
 This version preserves user notes when updating files.
 """
 
-# Configuration
-# BIB_PATH = 'references_TEST.bib'
-BIB_PATH = 'references.bib'
-ARCHIVE_PATH = 'obsidian_archive.json'
-
-# Set your Obsidian vault path here - update this to your actual vault path
-OBSIDIAN_VAULT_PATH = os.path.expanduser('~/Documents/Obsidian Vault')  # Change this!
-PAPERS_FOLDER = 'Papers'
+# Default configuration (can be overridden via command-line arguments)
+DEFAULT_BIB_PATH = 'references.bib'
+DEFAULT_ARCHIVE_PATH = 'obsidian_archive.json'
+DEFAULT_VAULT_PATH = os.path.expanduser('~/Documents/obsidian')
+DEFAULT_PAPERS_FOLDER = 'Papers'
 
 
 def clean_str(s):
@@ -266,17 +263,17 @@ def create_obsidian_file(entry, papers_folder, user_content=None):
     return new_filepath, user_content
 
 
-def load_archive():
+def load_archive(archive_path):
     """Load the archive of previously processed entries"""
-    if os.path.exists(ARCHIVE_PATH):
-        with open(ARCHIVE_PATH, 'r', encoding='utf-8') as f:
+    if os.path.exists(archive_path):
+        with open(archive_path, 'r', encoding='utf-8') as f:
             return json.load(f)
     return {}
 
 
-def save_archive(archive):
+def save_archive(archive, archive_path):
     """Save the archive of processed entries"""
-    with open(ARCHIVE_PATH, 'w', encoding='utf-8') as f:
+    with open(archive_path, 'w', encoding='utf-8') as f:
         json.dump(archive, f, indent=2, ensure_ascii=False)
 
 
@@ -322,88 +319,118 @@ def cleanup_removed_papers(papers_folder, current_ref_ids, archive):
     return moved_count
 
 
+def parse_args():
+    """Parse command-line arguments"""
+    parser = argparse.ArgumentParser(
+        description='Sync Paperpile BibTeX export to Obsidian markdown files.'
+    )
+    parser.add_argument(
+        '-b', '--bib',
+        default=DEFAULT_BIB_PATH,
+        help=f'Path to BibTeX file (default: {DEFAULT_BIB_PATH})'
+    )
+    parser.add_argument(
+        '-v', '--vault',
+        default=DEFAULT_VAULT_PATH,
+        help=f'Path to Obsidian vault (default: {DEFAULT_VAULT_PATH})'
+    )
+    parser.add_argument(
+        '-f', '--folder',
+        default=DEFAULT_PAPERS_FOLDER,
+        help=f'Papers folder name inside the vault (default: {DEFAULT_PAPERS_FOLDER})'
+    )
+    parser.add_argument(
+        '-a', '--archive',
+        default=DEFAULT_ARCHIVE_PATH,
+        help=f'Path to archive JSON file (default: {DEFAULT_ARCHIVE_PATH})'
+    )
+    return parser.parse_args()
+
+
 def main():
     """Main function to sync BibTeX to Obsidian"""
-    
+    args = parse_args()
+
+    bib_path = args.bib
+    vault_path = Path(os.path.expanduser(args.vault))
+    papers_folder_name = args.folder
+    archive_path = args.archive
+
     # Check if Obsidian vault path exists
-    vault_path = Path(OBSIDIAN_VAULT_PATH)
     if not vault_path.exists():
-        print(f"Error: Obsidian vault path does not exist: {OBSIDIAN_VAULT_PATH}")
-        print("Please update OBSIDIAN_VAULT_PATH in the script to point to your actual Obsidian vault.")
+        print(f"Error: Obsidian vault path does not exist: {vault_path}")
+        print("Use --vault to specify your Obsidian vault path.")
         return
-    
+
     # Create Papers folder if it doesn't exist
-    papers_folder = vault_path / PAPERS_FOLDER
+    papers_folder = vault_path / papers_folder_name
     papers_folder.mkdir(exist_ok=True)
-    
+
     # Load the BibTeX file
-    if not os.path.exists(BIB_PATH):
-        print(f"Error: BibTeX file not found: {BIB_PATH}")
+    if not os.path.exists(bib_path):
+        print(f"Error: BibTeX file not found: {bib_path}")
         return
-        
-    print(f"Loading BibTeX file: {BIB_PATH}")
-    
+
+    print(f"Loading BibTeX file: {bib_path}")
+
     # Use older bibtexparser API
     parser = bibtexparser.bparser.BibTexParser()
     parser.ignore_nonstandard_types = True
     parser.homogenize_fields = False
     parser.interpolate_strings = False
-    
-    with open(BIB_PATH) as bib_file:
+
+    with open(bib_path) as bib_file:
         bibliography = bibtexparser.load(bib_file, parser=parser)
-    
+
     # Load archive of previously processed entries
-    archive = load_archive()
-    
+    archive = load_archive(archive_path)
+
     # Collect current ref_ids for cleanup
     current_ref_ids = set()
-    
+
     # Process entries
     processed_count = 0
     new_count = 0
     updated_count = 0
-    
+
     for entry in bibliography.entries:
         ref_id, formatted_entry = get_bib_entry(entry)
         current_ref_ids.add(ref_id)
-        ref_id, formatted_entry = get_bib_entry(entry)
-        
+
         # Check if this entry has changed since last processing
         if ref_id in archive and entries_are_equal(archive[ref_id], formatted_entry):
             continue  # No changes, skip
-        
+
         # Create or update the Obsidian file
-        # The create_obsidian_file function will extract existing user content from the file
-        # and merge it with any user content from the archive
         try:
             filepath, user_content = create_obsidian_file(
-                formatted_entry, 
+                formatted_entry,
                 papers_folder
             )
-            
+
             if ref_id in archive:
                 updated_count += 1
                 print(f"Updated: {filepath.name}")
             else:
                 new_count += 1
                 print(f"Created: {filepath.name}")
-            
+
             # Update archive with formatted entry and user content
             archive[ref_id] = {
-                'entry': formatted_entry, 
+                'entry': formatted_entry,
                 'notes': user_content.get('notes', '')
             }
             processed_count += 1
-            
+
         except Exception as e:
             print(f"Error processing {ref_id}: {e}")
-    
+
     # Clean up removed papers
     moved_count = cleanup_removed_papers(papers_folder, current_ref_ids, archive)
-    
+
     # Save updated archive
-    save_archive(archive)
-    
+    save_archive(archive, archive_path)
+
     # Print summary
     print(f"\nSync complete!")
     print(f"Total entries in BibTeX: {len(bibliography.entries)}")
