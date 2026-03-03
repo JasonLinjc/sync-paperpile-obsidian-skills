@@ -1,0 +1,9 @@
+{
+  "paperpile_folder_name": "Paperpile",
+  "max_categories": 15,
+  "model": "qwen-plus",
+  "api_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+  "api_key_env": "DASHSCOPE_API_KEY",
+  "batch_size": 30,
+  "rclone_remote": "gdrive:"
+}

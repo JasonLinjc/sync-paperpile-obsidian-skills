@@ -1,20 +1,51 @@
 # Paperpile to Obsidian Sync Tool
 
-This tool synchronizes your Paperpile bibliography with your Obsidian vault by creating, updating, and organizing individual markdown files for each paper in the "Papers" folder of your vault.
+A toolkit that synchronizes your Paperpile bibliography with your Obsidian vault and optionally organizes papers by topic using LLM-based classification.
 
 <br>
 
 ## Features
 
+### Core Sync (`sync_obsidian.py`)
+
 - **Creates individual markdown files** for each paper in your Obsidian vault's "Papers" folder
-- **YAML frontmatter metadata** including title, authors, year, journal/conference, abstract, URL, ref_id, and type - fully compatible with Obsidian's Dataview plugin
-- **Preserves user notes** - any content you add after the YAML frontmatter is preserved during sync operations
-- **Human-readable filenames** using the format "Title (ref_id).md" with proper spacing and casing
-- **Automatic title change detection** - when paper titles change in Paperpile, existing files are automatically renamed while preserving your notes
-- **Automatic cleanup** - papers removed from Paperpile are detected and their markdown files are moved to a "Removed Papers" subfolder
-- **Archive-based sync** - uses `obsidian_archive.json` to track changes and avoid unnecessary file rewrites for better performance
-- **Safe filename handling** - removes invalid filesystem characters and handles filename length limits
-- **Comprehensive logging** - detailed console output shows what files were created, updated, renamed, or moved
+- **YAML frontmatter metadata** including title, authors, year, journal/conference, abstract, URL, ref_id, and type — fully compatible with Obsidian's Dataview plugin
+- **Preserves user notes** — any content you add after the YAML frontmatter is preserved during sync operations
+- **Human-readable filenames** using the format `Title (ref_id).md` with proper spacing and casing
+- **Automatic title change detection** — when paper titles change in Paperpile, existing files are automatically renamed while preserving your notes
+- **Automatic cleanup** — papers removed from Paperpile are detected and moved to a "Removed Papers" subfolder (not deleted)
+- **Archive-based sync** — uses `obsidian_archive.json` to track changes and skip unchanged papers
+- **CLI arguments** — configure bib path, vault path, and more without editing the script
+
+### LLM Topic Classification (`--classify`)
+
+- **Two-step LLM classification** using Qwen API — proposes topic categories, then assigns each paper
+- **Auto-generates tags** — 2–4 kebab-case tags per paper (e.g. `gene-regulation`, `machine-learning`)
+- **Organizes into subfolders** — moves papers into topic subfolders (e.g. `Papers/Gene Regulation/`)
+- **Updates frontmatter** — adds `topic:` and `tags:` to YAML frontmatter plus inline `#tag` lines
+- **Incremental** — only classifies new papers; use `--reclassify` to force a full redo
+
+### Google Drive PDF Linking (`--link-pdfs` / `link_pdfs.py`)
+
+- **Matches Google Drive PDFs** to papers by normalized title + year
+- **Adds `pdf_url` to YAML frontmatter** — Obsidian wikilinks (`[[PDFs/...]]`) or Google Drive web links
+- **PDF++ integration** — with `--mount-path`, generates wikilinks that open in Obsidian's PDF++ viewer
+- **Incremental** — results cached in `pdf_links.json`; only new papers are scanned
+- **Two entry points:**
+  - `sync_obsidian.py --link-pdfs` — link PDFs during a full bib sync
+  - `link_pdfs.py <folder>` — standalone script to add PDF links to any folder of existing `.md` files (no `.bib` required)
+
+### Google Drive PDF Organizer (`organizer.py`)
+
+- **Organizes Paperpile PDFs** on Google Drive into topic subfolders via `rclone`
+- **Dry-run by default** — preview the plan before moving anything
+- **Reversible** — all moves are logged and can be undone with `--undo`
+
+### Bib Update Checker (`check_bib.sh`)
+
+- **Checks if `paperpile.bib`** on Google Drive is newer than the local copy
+- **Compares file sizes** via `rclone lsjson`
+- **Prompts to pull** if an update is available
 
 <br>
 
@@ -23,71 +54,175 @@ This tool synchronizes your Paperpile bibliography with your Obsidian vault by c
 ### 1. Install Dependencies
 
 ```bash
+conda create -n paperpile_obsidian python=3.11 -y
+conda activate paperpile_obsidian
 pip install -r requirements_obsidian.txt
 ```
 
 Or install individually:
+
 ```bash
-pip install bibtexparser python-slugify
+pip install bibtexparser python-slugify openai
 ```
 
-### 2. Configure Obsidian Vault Path
-
-Edit the `sync_obsidian.py` file and update the `OBSIDIAN_VAULT_PATH` variable to point to your Obsidian vault:
-
-```python
-# Set your Obsidian vault path here - update this to your actual vault path
-OBSIDIAN_VAULT_PATH = os.path.expanduser('~/Documents/My Obsidian Vault')  # Change this!
-```
-
-### 3. Set up Paperpile BibTeX Export
+### 2. Set up Paperpile BibTeX Export
 
 1. In Paperpile, click the gear icon (Settings) in the top-right
 2. Go to "Workflows and Integrations"
 3. Add a new "BibTeX Export" workflow:
    - Repository: Your GitHub repository (or local folder)
-   - Export path: `references.bib`
+   - Export path: `paperpile.bib`
    - Set up automatic sync if desired
-  
-### 4. Create Obsidian Folders
 
-1. Create an empty `Papers/` folder in your Obsidian vault
-2. Create an empty `Removed Papers/` folder inside of that folder
+### 3. (Optional) Set up LLM Classification
 
-### 5. Turn On Dataview Plugin in Obsidian
+Create a `.env` file in the project directory:
 
-1. Open Obsidian and open "Settings" from the file menu
-2. Click on "Community plugins" in the sidebar
-3. Click "Browse" and search for "Dataview"
-4. Install and enable the plugin
+```
+QWEN_API_KEY=your-api-key-here
+```
 
-This will format the frontmatter in your notes, which is where all the paper information will go.
+For the Google Drive organizer, export the key instead:
+
+```bash
+export DASHSCOPE_API_KEY=your-api-key-here
+```
+
+### 4. (Optional) Set up rclone for Google Drive
+
+Required for PDF linking, `organizer.py`, and syncing the bib file from Google Drive:
+
+```bash
+rclone config  # follow prompts to set up a "gdrive" remote
+```
+
+### 5. (Optional) Mount Google Drive Locally for PDF++ Integration
+
+To open PDFs directly in Obsidian's PDF++ viewer, mount Google Drive locally:
+
+```bash
+# Install macFUSE (macOS — requires enabling kernel extensions via Startup Security Utility)
+brew install --cask macfuse
+
+# Mount Google Drive
+mkdir -p ~/gdrive
+rclone mount gdrive: ~/gdrive --vfs-cache-mode full --daemon
+
+# Create symlink in your Obsidian vault
+ln -s ~/gdrive/Paperpile/All\ Papers ~/Documents/obsidian/Paperpile/PDFs
+```
+
+Then use `--mount-path ~/gdrive` when linking PDFs to generate Obsidian wikilinks.
+
+### 6. Turn On Dataview Plugin in Obsidian
+
+1. Open Obsidian → Settings → Community plugins
+2. Browse and search for "Dataview"
+3. Install and enable the plugin
 
 <br>
 
 ## Usage
 
-### Manual Sync
-
-Place your `references.bib` file in the same directory as the script and run:
+### Basic Sync
 
 ```bash
+# Sync bib file from Google Drive (if using rclone)
+rclone copy gdrive:paperpile.bib .
+
+# Sync to Obsidian (uses defaults)
 python sync_obsidian.py
 ```
 
-If you are automatically syncing your bibtex file using the Paperpile bot, then make sure you pull the newest version of that file to your local machine before running the script. 
+### Sync with Classification
 
-### What Gets Created
+```bash
+# Sync + classify papers into topic folders
+python sync_obsidian.py --classify
 
-For each paper, a markdown file is created with:
+# Force re-classification of all papers
+python sync_obsidian.py --classify --reclassify
+```
 
-- **YAML frontmatter** containing all metadata (title, authors, year, journal, abstract, URL, ref_id, type)
-- **Notes section** below the frontmatter for your personal annotations
-- **Filename format**: "Title (ref_id).md" with natural spacing and casing
+### Link PDFs
 
-NOTE: Tags or keywords are currently excluded, as Paperpile mixes together your custom tags with existing bibtex keywords. I hate this but if you want those tags, it's easy to modify the script to add them.
+```bash
+# Link PDFs during a full bib sync (Google Drive web links)
+python sync_obsidian.py --link-pdfs
 
-### Example Output
+# Link PDFs with Obsidian wikilinks (requires mounted Google Drive + PDFs symlink)
+python sync_obsidian.py --link-pdfs --mount-path ~/gdrive
+
+# Force re-scan of Google Drive PDFs
+python sync_obsidian.py --link-pdfs --mount-path ~/gdrive --relink-pdfs
+```
+
+### Link PDFs to Existing Markdown (Standalone)
+
+```bash
+# Add PDF links to any folder of .md files (no .bib required)
+python link_pdfs.py ~/Documents/obsidian/MyVault/Papers --mount-path ~/gdrive
+
+# Force re-scan
+python link_pdfs.py ~/Documents/obsidian/MyVault/Papers --mount-path ~/gdrive --relink
+```
+
+### Check for Bib Updates
+
+```bash
+# Check if paperpile.bib on Google Drive is newer than local copy
+./check_bib.sh
+
+# Check a specific local bib file
+./check_bib.sh paperpile_bib/Paperpile_noncoding.bib
+```
+
+### Organize Google Drive PDFs
+
+```bash
+# Preview what would be moved (dry-run)
+python organizer.py --config config.json
+
+# Actually move the files
+python organizer.py --config config.json --execute
+
+# Undo a previous move
+python organizer.py --undo moves_20240301_120000.json
+```
+
+### CLI Options
+
+#### `sync_obsidian.py`
+
+| Flag | Short | Default | Description |
+|------|-------|---------|-------------|
+| `--bib` | `-b` | `paperpile.bib` | Path to BibTeX file |
+| `--vault` | `-v` | `~/Documents/obsidian/Paperpile` | Path to Obsidian vault |
+| `--folder` | `-f` | `Papers` | Papers folder name inside the vault |
+| `--archive` | `-a` | derived from bib name | Path to archive JSON file |
+| `--classify` | | off | Run LLM-based topic classification after sync |
+| `--reclassify` | | off | Force re-classification of all papers |
+| `--link-pdfs` | | off | Match Google Drive PDFs and add `pdf_url` to frontmatter |
+| `--relink-pdfs` | | off | Force re-scan of Google Drive PDFs |
+| `--mount-path` | | none | Local Google Drive mount path (generates Obsidian wikilinks) |
+| `--model` | | `qwen-plus` | Qwen model ID for classification |
+| `--max-categories` | | `15` | Maximum number of topic categories |
+| `--batch-size` | | `30` | Papers per LLM batch call |
+
+#### `link_pdfs.py`
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `path` (positional) | required | Folder containing `.md` files to link |
+| `--mount-path` | none | Local Google Drive mount path (generates Obsidian wikilinks) |
+| `--pdf-folder` | `PDFs` | PDF folder name in vault for wikilinks |
+| `--relink` | off | Force re-scan (ignore cached `pdf_links.json`) |
+
+<br>
+
+## What Gets Created
+
+For each paper, a markdown file is created:
 
 ```markdown
 ---
@@ -95,33 +230,34 @@ title: "Understanding BERT: A Comprehensive Analysis"
 authors: "John Smith, Jane Doe"
 year: 2023
 journal: "Nature Machine Intelligence"
-abstract: "This paper provides a comprehensive analysis of BERT and its applications in natural language processing tasks..."
+abstract: "This paper provides a comprehensive analysis..."
 url: "https://example.com/paper"
+pdf_url: "[[PDFs/2023/Smith et al. 2023 - Understanding BERT.pdf]]"
+tags:
+  - machine-learning
+  - transformers
+topic: "Natural Language Processing"
 ref_id: "Smith2023-ab"
-type: "article"
+type: paper
 ---
 
-<!-- Add your personal notes here. This section is preserved during sync updates. -->
+#machine-learning #transformers
+
+<!-- Add your notes here -->
 ```
+
+The `tags:`, `topic:`, and inline `#tags` are added only when using `--classify`. The `pdf_url:` is added when using `--link-pdfs` or `link_pdfs.py`.
 
 <br>
 
 ## File Management
 
-- Files are created in a `Papers/` folder within your Obsidian vault
-- The script keeps track of processed papers in `obsidian_archive.json`
-- Only changed papers are re-processed on subsequent runs
-- Filename format: `{title}_{reference_id}.md` (sanitized for file systems)
-
-<br>
-
-## Customization
-
-You can customize the script by modifying:
-
-- `PAPERS_FOLDER`: Change the folder name within your vault
-- `create_markdown_content()`: Modify the markdown template
-- `create_safe_filename()`: Change filename generation logic
+- Paper files live in `Papers/` within your Obsidian vault (organized into topic subfolders when classified)
+- Archive JSON (e.g. `paperpile_archive.json`) tracks the last-synced state for change detection — auto-named from bib filename
+- `classification.json` caches LLM results so only new papers are classified on re-runs
+- `pdf_links.json` caches PDF-to-paper matches so only new papers are scanned on re-runs
+- Removed papers are moved to `Papers/Removed Papers/`, not deleted
+- Filename format: `{Title} ({ref_id}).md`
 
 <br>
 
@@ -130,25 +266,17 @@ You can customize the script by modifying:
 ### Common Issues
 
 1. **"Obsidian vault path does not exist"**
-   - Update `OBSIDIAN_VAULT_PATH` in the script to your actual vault location
+   - Pass `--vault /path/to/your/vault` or update `DEFAULT_VAULT_PATH` in the script
 
 2. **"BibTeX file not found"**
-   - Ensure `references.bib` is in the same directory as the script
-   - Check your Paperpile export is working correctly
+   - Pass `--bib /path/to/your/file.bib` or ensure `paperpile.bib` is in the script directory
 
 3. **Import errors**
-   - Install the required dependencies: `pip install -r requirements_obsidian.txt`
-  
+   - Install dependencies: `pip install -r requirements_obsidian.txt`
+
 4. **Need to start over?**
-   - Open your `Papers/` folder and delete all the paper files (you can do this in Obsidian, in your file explorer, or at the command line)
-   - Delete the `obsidian_archive.json` file inside of this directory (same directory where you put your bibtex file)
-
-### Verification
-
-After running the script, check:
-- A `Papers/` folder exists in your Obsidian vault
-- A `Removed Papers/` folder exists inside of that folder
-- Markdown files are created for your papers
+   - Delete all files in `Papers/` and delete `obsidian_archive.json`
+   - To redo classification, also delete `classification.json` or use `--reclassify`
 
 <br>
 

@@ -1,0 +1,8 @@
+.env
+QWEN_API_KEY
+__pycache__/
+*.pyc
+*.bib
+paperpile_bib/
+*_archive.json
+pdf_links.json
