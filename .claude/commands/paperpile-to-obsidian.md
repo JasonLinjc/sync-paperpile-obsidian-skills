@@ -1,6 +1,15 @@
 Convert a Paperpile BibTeX export into an Obsidian vault. Each paper becomes a markdown file with YAML frontmatter. PDFs are linked by default.
 
-## Workflow
+## Mode detection
+
+Check `$ARGUMENTS` to determine which mode to run:
+
+- If `--link-pdfs-only` is present → run **PDF-only workflow** (skip to "PDF-Only Workflow" below)
+- Otherwise → run **Full workflow** (below)
+
+---
+
+## Full Workflow
 
 ### Step 1: Determine the bib file
 
@@ -54,3 +63,31 @@ Summarize what was done:
 - Number of papers synced (new/updated/removed)
 - Number of PDFs linked
 - Any errors or unmatched papers
+
+---
+
+## PDF-Only Workflow
+
+Link PDFs to existing markdown files without running a bib sync. No `.bib` file required.
+
+### Step 1: Determine the papers folder
+
+If a folder path is provided in `$ARGUMENTS` (after `--link-pdfs-only`), use it. Otherwise, ask the user:
+
+- List vaults: `ls ~/Documents/obsidian/`
+- The papers folder is typically `~/Documents/obsidian/<vault>/Papers`
+
+### Step 2: Link PDFs
+
+```bash
+cd ~/Documents/GitHub/sync-paperpile-obsidian && conda run -n paperpile_obsidian python link_pdfs.py "<papers_folder>" --mount-path ~/gdrive
+```
+
+Add `--relink` if the user wants to force a re-scan (ignore cached results).
+
+### Step 3: Report results
+
+Summarize:
+- Number of papers found
+- Number of PDFs matched
+- Number of papers without matching PDF

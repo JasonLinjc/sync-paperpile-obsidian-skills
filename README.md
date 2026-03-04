@@ -47,7 +47,10 @@ A toolkit that synchronizes your Paperpile bibliography with your Obsidian vault
 - **`/paperpile-to-obsidian` command** — interactive workflow that walks through bib selection, vault choice, sync, and PDF linking
 - **Claude-based classification** — when `--classify` is passed, Claude classifies papers directly instead of calling the Qwen API
 - **Location:** `.claude/commands/paperpile-to-obsidian.md` (command) and `.claude/skills/paperpile-to-obsidian/SKILL.md` (skill definition)
-- **Usage:** In Claude Code, run `/paperpile-to-obsidian` or `/paperpile-to-obsidian path/to/file.bib`
+- **Usage:**
+  - `/paperpile-to-obsidian path/to/file.bib` — full sync + PDF linking
+  - `/paperpile-to-obsidian --link-pdfs-only ~/path/to/Papers` — link PDFs to existing markdown (no bib needed)
+  - `/paperpile-to-obsidian --classify` — full sync with Claude-based classification
 
 ### Bib Update Checker (`check_bib.sh`)
 

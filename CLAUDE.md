@@ -124,8 +124,14 @@ All configuration is via CLI arguments with sensible defaults:
 ## Claude Code skill (`.claude/`)
 
 - **Command:** `.claude/commands/paperpile-to-obsidian.md` — run via `/paperpile-to-obsidian` in Claude Code
-- **Skill:** `.claude/skills/paperpile-to-obsidian/SKILL.md` — interactive workflow: bib selection → vault choice → sync → PDF linking → optional Claude-based classification
+- **Skill:** `.claude/skills/paperpile-to-obsidian/SKILL.md` — interactive workflow with two modes:
+  - **Full workflow** (default): bib selection → vault choice → sync → PDF linking → optional Claude-based classification
+  - **PDF-only** (`--link-pdfs-only`): link PDFs to existing markdown files without a bib sync
 - When `--classify` is used via the skill, Claude classifies papers directly instead of calling the Qwen API
+- Usage examples:
+  - `/paperpile-to-obsidian path/to/file.bib` — full sync + PDF linking
+  - `/paperpile-to-obsidian --link-pdfs-only ~/Documents/obsidian/MyVault/Papers` — PDF linking only
+  - `/paperpile-to-obsidian --classify` — full sync with Claude-based classification
 
 ## Dependencies
 
