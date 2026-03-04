@@ -288,17 +288,17 @@ The `tags:`, `topic:`, and inline `#tags` are added only when using `--classify`
 
 <br>
 
-## Comparison with Notion Version
+## Acknowledgments
 
-This tool is based off a previous version I made for syncing Paperpile with Notion. That code was based on [this repo](https://github.com/seba-1511/sync-paperpile-notion) by [Séb Arnold](https://github.com/seba-1511). At this point, I think there is very little that is similar to that codebase, but I still want to shout out that tool as my inspiration. That tool used Github actions to automatically detect changes to the bibtex file and push those changes to Notion, while this tool requires you to manually run the sync script. Since my Obsidian files are all local, I'm not sure of a good way to automate the process, though I'm sure one exists (probably via an actual Obsidian plug in).
+This repo is forked from [sync-paperpile-notion](https://github.com/seba-1511/sync-paperpile-notion) by [Séb Arnold](https://github.com/seba-1511), which synced Paperpile bibliographies to Notion using GitHub Actions.
 
-| Feature | Notion Version | Obsidian Version |
-|---------|---------------|------------------|
-| Storage | Notion Database | Markdown Files |
-| Search | Notion Search | Obsidian Search |
-| Linking | Database Relations | Wiki Links |
-| Notes | Notion Pages | Markdown Sections |
-| Customization | Limited | Full Control |
-| Offline Access | Requires Internet | Full Offline |
+### What's new in this version
 
-The Obsidian version provides better control over your data and works entirely offline, while the Notion version offers better collaboration features and structured database views.
+- **Obsidian as the target** — generates local markdown files instead of Notion database entries
+- **BibLaTeX support** — handles both BibTeX and BibLaTeX field formats
+- **LLM-based topic classification** — automatically categorizes papers into topic folders using Qwen API
+- **Google Drive PDF linking** — matches PDFs on Google Drive to papers and adds wikilinks for Obsidian's PDF++ viewer
+- **Google Drive PDF organizer** — organizes Paperpile PDFs into topic subfolders on Google Drive
+- **Claude Code skill** — interactive `/paperpile-to-obsidian` command with Claude-based classification
+- **Standalone PDF linker** — `link_pdfs.py` adds PDF links to any existing markdown files without a `.bib` file
+- **Bib update checker** — `check_bib.sh` detects when the Google Drive bib file has changed
