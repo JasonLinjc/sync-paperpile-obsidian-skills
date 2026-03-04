@@ -290,7 +290,7 @@ The `tags:`, `topic:`, and inline `#tags` are added only when using `--classify`
 
 ## Acknowledgments
 
-This repo is forked from [sync-paperpile-notion](https://github.com/seba-1511/sync-paperpile-notion) by [Séb Arnold](https://github.com/seba-1511), which synced Paperpile bibliographies to Notion using GitHub Actions.
+This repo is forked from [sync-paperpile-obsidian](https://github.com/maria-antoniak/sync-paperpile-obsidian) by [Maria Antoniak](https://github.com/maria-antoniak), which provided the core BibTeX-to-Obsidian sync functionality.
 
 ### What's new in this version
 
