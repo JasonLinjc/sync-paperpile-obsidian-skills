@@ -90,6 +90,20 @@ def main():
         return
 
     mount_path = os.path.expanduser(args.mount_path) if args.mount_path else None
+
+    # Ensure PDFs symlink exists in the vault when using mount_path
+    if mount_path:
+        vault_path = papers_folder.parent
+        pdfs_symlink = vault_path / args.pdf_folder
+        drive_papers_dir = Path(mount_path) / "Paperpile" / "All Papers"
+        if not pdfs_symlink.exists():
+            if drive_papers_dir.exists():
+                pdfs_symlink.symlink_to(drive_papers_dir)
+                print(f"Created symlink: {pdfs_symlink} -> {drive_papers_dir}")
+            else:
+                print(f"Warning: Google Drive papers folder not found at {drive_papers_dir}")
+                print(f"  PDFs symlink not created — wikilinks may not work in Obsidian.")
+
     cache_path = papers_folder / "pdf_links.json"
 
     # Load cache

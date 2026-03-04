@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Always use `conda run -n paperpile_obsidian` to run scripts:
 ```bash
-cd ~/Documents/GitHub/sync-paperpile-obsidian && conda run -n paperpile_obsidian python sync_obsidian.py
+cd ~/Documents/GitHub/sync-paperpile-obsidian-skills && conda run -n paperpile_obsidian python sync_obsidian.py
 ```
 
 ### Key commands
@@ -83,6 +83,7 @@ Both scripts use the same approach with Qwen via the OpenAI-compatible client:
 - PDF filename format on Google Drive: `Author et al. YEAR - Title.pdf` (regex differs from organizer.py's `Author - Year - Title.pdf`)
 - With `--mount-path`: generates Obsidian wikilinks `[[PDFs/2025/Author et al. 2025 - Title.pdf]]` for PDF++ integration
 - Without `--mount-path`: generates Google Drive web links `https://drive.google.com/file/d/{ID}/view`
+- **Auto-creates `PDFs/` symlink** in the vault when `--mount-path` is used and the symlink doesn't exist yet (points to `<mount_path>/Paperpile/All Papers`)
 - Results cached in `pdf_links.json`; `--relink-pdfs` forces full re-scan
 
 ### Key data flow
@@ -125,9 +126,11 @@ All configuration is via CLI arguments with sensible defaults:
 
 - **Command:** `.claude/commands/paperpile-to-obsidian.md` — run via `/paperpile-to-obsidian` in Claude Code
 - **Skill:** `.claude/skills/paperpile-to-obsidian/SKILL.md` — interactive workflow with two modes:
-  - **Full workflow** (default): bib selection → vault choice → sync → PDF linking → optional Claude-based classification
+  - **Full workflow** (default): bib selection → archive → vault choice → sync → PDF linking → optional classification
   - **PDF-only** (`--link-pdfs-only`): link PDFs to existing markdown files without a bib sync
+- Each step explains its goal to the user and reports progress before moving on
 - When `--classify` is used via the skill, Claude classifies papers directly instead of calling the Qwen API
+- PDF linking auto-creates the `PDFs/` symlink if missing in the target vault
 - Usage examples:
   - `/paperpile-to-obsidian path/to/file.bib` — full sync + PDF linking
   - `/paperpile-to-obsidian --link-pdfs-only ~/Documents/obsidian/MyVault/Papers` — PDF linking only
@@ -140,5 +143,6 @@ All configuration is via CLI arguments with sensible defaults:
 ## Local setup notes
 - Google Drive mounted at `~/gdrive` via `rclone mount gdrive: ~/gdrive --vfs-cache-mode full --daemon`
 - macFUSE installed (required for rclone mount on macOS, kernel extensions enabled via Startup Security Utility)
-- `PDFs/` in the vault is a symlink → `~/gdrive/Paperpile/All Papers` (for PDF++ integration)
+- `PDFs/` in the vault is a symlink → `~/gdrive/Paperpile/All Papers` (for PDF++ integration; auto-created by `--link-pdfs` when missing)
+- After creating a new `PDFs/` symlink, Obsidian must be restarted to index it
 - Git remote is SSH: `git@github.com:JasonLinjc/sync-paperpile-obsidian.git`

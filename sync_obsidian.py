@@ -948,6 +948,20 @@ def main():
 
     # --- PDF Linking ---
     if args.link_pdfs:
+        mount_path = os.path.expanduser(args.mount_path) if args.mount_path else None
+
+        # Ensure PDFs symlink exists in the vault when using mount_path
+        if mount_path:
+            pdfs_symlink = vault_path / "PDFs"
+            drive_papers_dir = Path(os.path.expanduser(mount_path)) / "Paperpile" / "All Papers"
+            if not pdfs_symlink.exists():
+                if drive_papers_dir.exists():
+                    pdfs_symlink.symlink_to(drive_papers_dir)
+                    print(f"\nCreated symlink: {pdfs_symlink} -> {drive_papers_dir}")
+                else:
+                    print(f"\n  Warning: Google Drive papers folder not found at {drive_papers_dir}")
+                    print(f"  PDFs symlink not created — wikilinks may not work in Obsidian.")
+
         pdf_links_path = Path(archive_path).parent / "pdf_links.json"
 
         # Load existing links if available
@@ -971,7 +985,6 @@ def main():
             ]
 
         if entries_to_link:
-            mount_path = os.path.expanduser(args.mount_path) if args.mount_path else None
             print(f"\nScanning Google Drive for PDFs...")
             pdfs = list_drive_pdfs(mount_path=mount_path)
             print(f"  Found {len(pdfs)} PDFs on Google Drive.")
