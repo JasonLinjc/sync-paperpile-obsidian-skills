@@ -294,7 +294,6 @@ This repo is forked from [sync-paperpile-obsidian](https://github.com/maria-anto
 
 ### What's new in this version
 
-- **Obsidian as the target** — generates local markdown files instead of Notion database entries
 - **BibLaTeX support** — handles both BibTeX and BibLaTeX field formats
 - **LLM-based topic classification** — automatically categorizes papers into topic folders using Qwen API
 - **Google Drive PDF linking** — matches PDFs on Google Drive to papers and adds wikilinks for Obsidian's PDF++ viewer
