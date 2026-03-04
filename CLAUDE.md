@@ -46,6 +46,7 @@ cd ~/Documents/GitHub/sync-paperpile-obsidian && conda run -n paperpile_obsidian
 
 **`sync_obsidian.py`** — BibTeX → Obsidian markdown sync
 - Parses `paperpile.bib` with `bibtexparser`, creates/updates one `.md` file per paper in the vault
+- Supports both BibTeX (`year`, `journal`) and BibLaTeX (`date`, `journaltitle`) fields
 - Archive auto-derives from bib filename (e.g. `paperpile.bib` → `paperpile_archive.json`)
 - User notes (anything below YAML frontmatter) are preserved across updates via `extract_user_content_from_markdown()`
 - Title changes trigger file renames while preserving content
@@ -120,7 +121,14 @@ All configuration is via CLI arguments with sensible defaults:
 - `--relink-pdfs` — Force re-scan of Google Drive PDFs
 - `--mount-path` — Local Google Drive mount path (e.g. `~/gdrive`); generates Obsidian wikilinks instead of web URLs
 
+## Claude Code skill (`.claude/`)
+
+- **Command:** `.claude/commands/paperpile-to-obsidian.md` — run via `/paperpile-to-obsidian` in Claude Code
+- **Skill:** `.claude/skills/paperpile-to-obsidian/SKILL.md` — interactive workflow: bib selection → vault choice → sync → PDF linking → optional Claude-based classification
+- When `--classify` is used via the skill, Claude classifies papers directly instead of calling the Qwen API
+
 ## Dependencies
+
 `requirements_obsidian.txt`: `bibtexparser`, `python-slugify`, `openai` (used as client for Qwen/DashScope API)
 
 ## Local setup notes

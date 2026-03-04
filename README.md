@@ -14,6 +14,7 @@ A toolkit that synchronizes your Paperpile bibliography with your Obsidian vault
 - **Human-readable filenames** using the format `Title (ref_id).md` with proper spacing and casing
 - **Automatic title change detection** — when paper titles change in Paperpile, existing files are automatically renamed while preserving your notes
 - **Automatic cleanup** — papers removed from Paperpile are detected and moved to a "Removed Papers" subfolder (not deleted)
+- **BibLaTeX compatible** — supports both BibTeX (`year`, `journal`) and BibLaTeX (`date`, `journaltitle`) fields
 - **Archive-based sync** — uses `obsidian_archive.json` to track changes and skip unchanged papers
 - **CLI arguments** — configure bib path, vault path, and more without editing the script
 
@@ -40,6 +41,13 @@ A toolkit that synchronizes your Paperpile bibliography with your Obsidian vault
 - **Organizes Paperpile PDFs** on Google Drive into topic subfolders via `rclone`
 - **Dry-run by default** — preview the plan before moving anything
 - **Reversible** — all moves are logged and can be undone with `--undo`
+
+### Claude Code Skill (`.claude/`)
+
+- **`/paperpile-to-obsidian` command** — interactive workflow that walks through bib selection, vault choice, sync, and PDF linking
+- **Claude-based classification** — when `--classify` is passed, Claude classifies papers directly instead of calling the Qwen API
+- **Location:** `.claude/commands/paperpile-to-obsidian.md` (command) and `.claude/skills/paperpile-to-obsidian/SKILL.md` (skill definition)
+- **Usage:** In Claude Code, run `/paperpile-to-obsidian` or `/paperpile-to-obsidian path/to/file.bib`
 
 ### Bib Update Checker (`check_bib.sh`)
 

@@ -108,6 +108,11 @@ def get_bib_entry(entry):
     if 'year' in entry:
         year = entry['year']
         year = clean_str(year)
+    elif 'date' in entry:
+        # BibLaTeX format: date = {2025-04-08}
+        m = re.search(r'(\d{4})', entry['date'])
+        if m:
+            year = m.group(1)
 
     if 'url' in entry:
         link = entry['url']
@@ -119,6 +124,8 @@ def get_bib_entry(entry):
 
     if 'journal' in entry:
         journal = clean_str(entry['journal'])
+    elif 'journaltitle' in entry:
+        journal = clean_str(entry['journaltitle'])
         
     if 'booktitle' in entry:
         booktitle = clean_str(entry['booktitle'])
