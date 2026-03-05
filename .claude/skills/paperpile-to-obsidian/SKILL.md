@@ -1,11 +1,11 @@
 ---
 name: paperpile-to-obsidian
-description: Convert a Paperpile .bib file into an Obsidian vault with markdown files per paper, PDF links, and optional Claude-powered classification.
+description: Convert a Paperpile .bib file into an Obsidian vault with markdown files per paper, PDF links, and optional Claude-powered tagging and topic organization.
 ---
 
 # Paperpile to Obsidian
 
-Convert a Paperpile BibTeX export into an Obsidian vault. Each paper becomes a markdown file with YAML frontmatter. PDFs are linked by default. Classification is optional.
+Convert a Paperpile BibTeX export into an Obsidian vault. Each paper becomes a markdown file with YAML frontmatter. PDFs are linked by default. Tagging and topic organization is optional.
 
 ## Mode detection
 
@@ -74,17 +74,18 @@ cd ~/Documents/GitHub/sync-paperpile-obsidian-skills && conda run -n paperpile_o
 
 Tell the user how many PDFs were matched and how many papers have no matching PDF.
 
-### Step 6: Classify papers (optional)
+### Step 6: Tag and organize papers (optional)
 
-**Goal:** Automatically categorize papers into topic folders and add tags, so the vault is organized by research area.
+**Goal:** Tag each paper's Obsidian markdown with a topic category and descriptive tags, then organize files into topic subfolders.
 
 Only if `--classify` or `--reclassify` is in `$ARGUMENTS`.
 
-**Do NOT use the Qwen API.** Claude performs classification directly:
+- `--classify`: tag only the **newly-added** papers from Step 4
+- `--reclassify`: **re-tag all** papers in the Papers folder
 
-1. Read the markdown files that need classification:
-   - `--classify`: only the newly created files from Step 4
-   - `--reclassify`: all `.md` files in the Papers folder
+**Do NOT use the Qwen API.** Claude performs tagging directly:
+
+1. Read the markdown files that need tagging (based on the mode above).
 
 2. For each paper, read its `title` and `abstract` from the YAML frontmatter.
 
@@ -99,16 +100,17 @@ Only if `--classify` or `--reclassify` is in `$ARGUMENTS`.
    - Add inline `#tag` lines after the frontmatter
    - Move the file into a subfolder matching its topic: `Papers/<Topic>/`
 
-Tell the user the proposed categories and, after approval, how many papers were classified.
+Tell the user the proposed categories and, after approval, how many papers were tagged.
 
 ### Step 7: Report results
 
 **Goal:** Give the user a clear summary of everything that happened.
 
 Summarize:
+
 - Number of papers synced (new/updated/removed)
 - Number of PDFs linked
-- Number of papers classified (if applicable)
+- Number of papers tagged (if applicable)
 - Any errors or unmatched papers
 
 ---
@@ -143,6 +145,7 @@ Add `--relink` if the user wants to force a re-scan (ignore cached results).
 **Goal:** Tell the user what happened.
 
 Summarize:
+
 - Number of papers found
 - Number of PDFs matched
 - Number of papers without matching PDF
