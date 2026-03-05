@@ -129,12 +129,12 @@ All configuration is via CLI arguments with sensible defaults:
   - **Full workflow** (default): bib selection → archive → vault choice → sync → PDF linking → optional tagging
   - **PDF-only** (`--link-pdfs-only`): link PDFs to existing markdown files without a bib sync
 - Each step explains its goal to the user and reports progress before moving on
-- When `--classify` is used via the skill, Claude tags papers directly instead of calling the Qwen API
+- When `--tag` is used via the skill, Claude tags papers directly (no Qwen API); always asks user at end of workflow if not specified
 - PDF linking auto-creates the `PDFs/` symlink if missing in the target vault
 - Usage examples:
   - `/paperpile-to-obsidian path/to/file.bib` — full sync + PDF linking
   - `/paperpile-to-obsidian --link-pdfs-only ~/Documents/obsidian/MyVault/Papers` — PDF linking only
-  - `/paperpile-to-obsidian --classify` — full sync with Claude-based classification
+  - `/paperpile-to-obsidian --tag` — full sync with Claude-based tagging
 
 ## Dependencies
 

@@ -78,12 +78,18 @@ Tell the user how many PDFs were matched and how many papers have no matching PD
 
 **Goal:** Tag each paper's Obsidian markdown with a topic category and descriptive tags, then organize files into topic subfolders.
 
-Only if `--classify` or `--reclassify` is in `$ARGUMENTS`.
+If `--tag` or `--retag` is in `$ARGUMENTS`, proceed directly. Otherwise, ask the user if they want to tag their papers now:
 
-- `--classify`: tag only the **newly-added** papers from Step 4
-- `--reclassify`: **re-tag all** papers in the Papers folder
+- **Tag newly-added papers only** — tag only the papers created in Step 4
+- **Re-tag all papers** — re-tag every paper in the Papers folder
+- **Skip tagging** — finish without tagging
 
-**Do NOT use the Qwen API.** Claude performs tagging directly:
+If the user chooses to skip, jump to Step 7.
+
+- `--tag`: tag only the **newly-added** papers from Step 4
+- `--retag`: **re-tag all** papers in the Papers folder
+
+Claude performs tagging directly:
 
 1. Read the markdown files that need tagging (based on the mode above).
 
