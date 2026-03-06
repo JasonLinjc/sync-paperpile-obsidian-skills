@@ -68,9 +68,9 @@ cd ~/Documents/GitHub/sync-paperpile-obsidian-skills && conda run -n paperpile_o
 
 Tell the user how many PDFs were matched and how many papers have no matching PDF.
 
-### Step 6: Tag and organize papers (optional)
+### Step 6: Tag papers (optional)
 
-**Goal:** Tag each paper's Obsidian markdown with a topic category and descriptive tags, then organize files into topic subfolders.
+**Goal:** Tag each paper's Obsidian markdown with a topic category and descriptive tags.
 
 If `--tag` or `--retag` is in `$ARGUMENTS`, proceed directly. Otherwise, ask the user if they want to tag their papers now:
 
@@ -98,7 +98,6 @@ Claude performs tagging directly:
 5. Update each markdown file:
    - Add/update `topic:` and `tags:` in the YAML frontmatter
    - Add inline `#tag` lines after the frontmatter
-   - Move the file into a subfolder matching its topic: `Papers/<Topic>/`
 
 Tell the user the proposed categories and, after approval, how many papers were tagged.
 

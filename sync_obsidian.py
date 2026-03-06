@@ -524,6 +524,9 @@ def list_drive_pdfs(rclone_remote="gdrive:", paperpile_folder="Paperpile", mount
 def match_pdfs_to_entries(pdfs, bib_entries):
     """Match Google Drive PDFs to BibTeX entries by normalized title + year.
 
+    Uses exact match first, then falls back to substring matching for PDFs
+    whose filenames were truncated by Paperpile.
+
     Args:
         pdfs: list of dicts from list_drive_pdfs()
         bib_entries: list of (ref_id, formatted_entry) tuples
@@ -538,6 +541,11 @@ def match_pdfs_to_entries(pdfs, bib_entries):
         key = (normalize_title(pdf["title"]), pdf["year"])
         pdf_lookup.setdefault(key, []).append(pdf)
 
+    # Also build a year-based lookup for substring fallback
+    year_lookup = {}
+    for pdf in pdfs:
+        year_lookup.setdefault(pdf["year"], []).append(pdf)
+
     matched = {}
     unmatched_entries = []
     used_pdfs = set()
@@ -547,6 +555,8 @@ def match_pdfs_to_entries(pdfs, bib_entries):
         year = entry.get("year", "")
         key = (norm_title, year)
 
+        found = False
+        # Pass 1: exact match
         if key in pdf_lookup:
             for pdf in pdf_lookup[key]:
                 if pdf["drive_id"] not in used_pdfs:
@@ -556,10 +566,36 @@ def match_pdfs_to_entries(pdfs, bib_entries):
                         "pdf_name": pdf["name"],
                     }
                     used_pdfs.add(pdf["drive_id"])
+                    found = True
                     break
-            else:
-                unmatched_entries.append(ref_id)
-        else:
+
+        # Pass 2: substring fallback for truncated PDF filenames
+        # Paperpile truncates long filenames with "...", so the PDF's
+        # normalized title may be a subset of the bib title words.
+        if not found and year in year_lookup and len(norm_title.split()) >= 5:
+            for pdf in year_lookup[year]:
+                if pdf["drive_id"] in used_pdfs:
+                    continue
+                pdf_norm = normalize_title(pdf["title"])
+                pdf_words = pdf_norm.split()
+                # Skip short PDF titles to avoid false positives
+                if len(pdf_words) < 4:
+                    continue
+                # Check if the PDF title words (from start) match the bib title start,
+                # and the PDF title ends with words from the bib title end
+                first_words_match = norm_title.startswith(' '.join(pdf_words[:3]))
+                last_words_match = norm_title.endswith(' '.join(pdf_words[-3:]))
+                if first_words_match and last_words_match:
+                    matched[ref_id] = {
+                        "pdf_url": pdf["pdf_url"],
+                        "drive_id": pdf["drive_id"],
+                        "pdf_name": pdf["name"],
+                    }
+                    used_pdfs.add(pdf["drive_id"])
+                    found = True
+                    break
+
+        if not found:
             unmatched_entries.append(ref_id)
 
     return matched, unmatched_entries

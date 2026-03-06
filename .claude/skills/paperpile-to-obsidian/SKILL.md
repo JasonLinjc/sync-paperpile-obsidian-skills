@@ -1,11 +1,11 @@
 ---
 name: paperpile-to-obsidian
-description: Convert a Paperpile .bib file into an Obsidian vault with markdown files per paper, PDF links, and optional Claude-powered tagging and topic organization.
+description: Convert a Paperpile .bib file into an Obsidian vault with markdown files per paper, PDF links, and optional Claude-powered tagging.
 ---
 
 # Paperpile to Obsidian
 
-Convert a Paperpile BibTeX export into an Obsidian vault. Each paper becomes a markdown file with YAML frontmatter. PDFs are linked by default. Tagging and topic organization is optional.
+Convert a Paperpile BibTeX export into an Obsidian vault. Each paper becomes a markdown file with YAML frontmatter. PDFs are linked by default. Tagging is optional.
 
 ## Mode detection
 
@@ -74,9 +74,9 @@ cd ~/Documents/GitHub/sync-paperpile-obsidian-skills && conda run -n paperpile_o
 
 Tell the user how many PDFs were matched and how many papers have no matching PDF.
 
-### Step 6: Tag and organize papers (optional)
+### Step 6: Tag papers (optional)
 
-**Goal:** Tag each paper's Obsidian markdown with a topic category and descriptive tags, then organize files into topic subfolders.
+**Goal:** Tag each paper's Obsidian markdown with a topic category and descriptive tags.
 
 If `--tag` or `--retag` is in `$ARGUMENTS`, proceed directly. Otherwise, ask the user if they want to tag their papers now:
 
@@ -104,7 +104,6 @@ Claude performs tagging directly:
 5. Update each markdown file:
    - Add/update `topic:` and `tags:` in the YAML frontmatter
    - Add inline `#tag` lines after the frontmatter
-   - Move the file into a subfolder matching its topic: `Papers/<Topic>/`
 
 Tell the user the proposed categories and, after approval, how many papers were tagged.
 

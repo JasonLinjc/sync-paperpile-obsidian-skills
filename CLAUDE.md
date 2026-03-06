@@ -51,7 +51,7 @@ cd ~/Documents/GitHub/sync-paperpile-obsidian-skills && conda run -n paperpile_o
 - User notes (anything below YAML frontmatter) are preserved across updates via `extract_user_content_from_markdown()`
 - Title changes trigger file renames while preserving content
 - Papers removed from BibTeX are moved to `Removed Papers/` (not deleted)
-- With `--classify`: calls Qwen API to assign topic categories, moves files into subfolders, updates frontmatter tags
+- With `--classify`: calls Qwen API to assign topic categories, updates frontmatter tags
 - With `--link-pdfs`: matches Google Drive PDFs to BibTeX entries by normalized title+year, adds `pdf_url` wikilink to frontmatter
 
 **`link_pdfs.py`** — Standalone PDF linker for existing markdown files
@@ -90,7 +90,7 @@ Both scripts use the same approach with Qwen via the OpenAI-compatible client:
 ```
 paperpile.bib → bibtexparser → archive diff → create/update .md files
                                                     ↓ (--classify)
-                                           Qwen API → topics + tags → organize into subfolders
+                                           Qwen API → topics + tags → update frontmatter
                                                     ↓ (--link-pdfs)
                                            rclone lsjson → match by title+year → add pdf_url to frontmatter
 ```
@@ -105,7 +105,7 @@ Maps `ref_id` → `{ topic: str, tags: [str] }`. Persists LLM results so only ne
 Maps `ref_id` → `{ pdf_url: str, drive_id: str, pdf_name: str }`. Persists rclone scan results so only new papers are matched on subsequent runs. Use `--relink-pdfs` to force a full redo.
 
 ### File naming
-Format: `{Title} ({ref_id}).md` — the `ref_id` (e.g. `Smith2023-ab`) is the stable identifier used to match files across renames. `find_existing_file_by_ref_id()` searches recursively through topic subfolders.
+Format: `{Title} ({ref_id}).md` — the `ref_id` (e.g. `Smith2023-ab`) is the stable identifier used to match files across renames. `find_existing_file_by_ref_id()` searches the papers folder for matching files.
 
 ### CLI options (sync_obsidian.py)
 All configuration is via CLI arguments with sensible defaults:
