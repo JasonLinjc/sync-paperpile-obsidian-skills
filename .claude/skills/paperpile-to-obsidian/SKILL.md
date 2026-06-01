@@ -74,6 +74,12 @@ cd ~/Documents/GitHub/sync-paperpile-obsidian-skills && conda run -n paperpile_o
 
 Tell the user how many PDFs were matched and how many papers have no matching PDF.
 
+**This skill never uses FUSE.** PDF matching runs entirely through the rclone **remote** (`rclone lsjson`/`lsf` on `gdrive:`), so the matches and `pdf_url` wikilinks are written whether or not `~/gdrive` is mounted. Therefore:
+
+- **Never** run `rclone mount ... --daemon` (or any FUSE mount). Mounting `~/gdrive` is entirely the user's responsibility and out of scope for this skill — a sandboxed daemon would not persist anyway.
+- If the script warns `Google Drive papers folder not found at ~/gdrive/...` or `PDFs symlink not created`, treat it as **benign**: the linking still succeeded and the wikilinks resolve once the user brings their own mount up.
+- To inspect Google Drive, use `rclone lsf gdrive:"Paperpile/All Papers/"` (or `rclone lsd`) — never `ls ~/gdrive`.
+
 ### Step 6: Tag papers (optional)
 
 **Goal:** Tag each paper's Obsidian markdown with a topic category and descriptive tags.
@@ -144,6 +150,8 @@ cd ~/Documents/GitHub/sync-paperpile-obsidian-skills && conda run -n paperpile_o
 ```
 
 Add `--relink` if the user wants to force a re-scan (ignore cached results).
+
+**This skill never uses FUSE.** Matching runs through the rclone remote, so wikilinks are written even when `~/gdrive` is not mounted. Never run `rclone mount`; a "mount path not found" / "PDFs symlink not created" warning is benign. Mounting is the user's responsibility. Inspect Drive with `rclone lsf`/`rclone lsd`, never `ls ~/gdrive`.
 
 ### Step 3: Report results
 
